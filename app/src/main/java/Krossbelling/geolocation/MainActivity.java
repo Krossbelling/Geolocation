@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity implements UserLocationObjec
     private MapView mapview;
     private UserLocationLayer userLocationLayer;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 

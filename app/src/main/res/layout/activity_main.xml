@@ -1,16 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout   xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
 
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="75dp"
+        android:layout_marginLeft="45dp"
+        android:layout_marginTop="10dp"
+        android:layout_toEndOf="@+id/textView2"
+        android:layout_toRightOf="@+id/textView2"
+        android:text="Широта"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        tools:visibility="visible" />
+
     <com.yandex.mapkit.mapview.MapView
         android:id="@+id/mapview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="50dp" />
+        android:layout_below="@+id/editTextNumberDecimal2"
+        android:layout_marginTop="3dp" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="45dp"
+        android:layout_marginLeft="45dp"
+        android:layout_marginTop="10dp"
+        android:text="Долгота"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        tools:visibility="visible" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="25dp"
+        android:layout_marginEnd="3dp"
+        android:layout_marginRight="10dp"
+        android:layout_toEndOf="@+id/editTextNumberDecimal2"
+        android:layout_toRightOf="@+id/editTextNumberDecimal2"
+        android:background="@color/purple_500"
+        android:text="Показать"
+        app:backgroundTint="@color/purple_500" />
+
+    <EditText
+        android:id="@+id/editTextNumberDecimal"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
 
 
-</LinearLayout>
+        android:layout_below="@+id/textView2"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="1dp"
+        android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/editTextNumberDecimal2"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+
+        android:layout_below="@+id/textView3"
+
+        android:layout_marginStart="14dp"
+        android:layout_marginLeft="14dp"
+        android:layout_marginTop="1dp"
+        android:layout_toEndOf="@+id/editTextNumberDecimal"
+        android:layout_toRightOf="@+id/editTextNumberDecimal"
+        android:inputType="numberDecimal" />
+
+
+</RelativeLayout >
