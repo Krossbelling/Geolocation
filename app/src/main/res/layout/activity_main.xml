@@ -59,6 +59,8 @@
         android:background="@color/purple_500"
         android:onClick="onClick"
         android:text="Показать"
+
+
         app:backgroundTint="@color/purple_500" />
 
     <EditText
@@ -74,6 +76,7 @@
         android:layout_marginStart="10dp"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="1dp"
+
         android:inputType="numberDecimal" />
 
     <EditText
@@ -86,6 +89,7 @@
         android:layout_marginStart="14dp"
         android:layout_marginLeft="14dp"
         android:layout_marginTop="1dp"
+
         android:layout_toEndOf="@+id/editTextNumberDecimal"
         android:layout_toRightOf="@+id/editTextNumberDecimal"
         android:inputType="numberDecimal" />

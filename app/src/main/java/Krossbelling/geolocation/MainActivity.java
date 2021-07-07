@@ -1,11 +1,25 @@
 package Krossbelling.geolocation;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PointF;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
 import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.geometry.Point;
@@ -22,13 +36,13 @@ import com.yandex.runtime.image.ImageProvider;
 
 
 
-public class MainActivity extends AppCompatActivity implements UserLocationObjectListener {
+public class MainActivity extends AppCompatActivity implements UserLocationObjectListener  {
+
     private MapView mapview;
     private UserLocationLayer userLocationLayer;
 
     double latitude;
     double longitude;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,15 +52,27 @@ public class MainActivity extends AppCompatActivity implements UserLocationObjec
         setContentView(R.layout.activity_main);
         super.onCreate(savedInstanceState);
         mapview = findViewById(R.id.mapview);
-        mapview.getMap().setRotateGesturesEnabled(false);
-        mapview.getMap().move(new CameraPosition(new Point(0, 0), 14, 0, 0));
 
-        MapKit mapKit = MapKitFactory.getInstance();
-        userLocationLayer = mapKit.createUserLocationLayer(mapview.getMapWindow());
-        userLocationLayer.setVisible(true);
-        userLocationLayer.setHeadingEnabled(true);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+        {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    100);
+        }
+        else {
 
-        userLocationLayer.setObjectListener(this);
+            mapview.getMap().setRotateGesturesEnabled(false);
+            mapview.getMap().move(new CameraPosition(new Point(0, 0), 14, 0, 0));
+
+            MapKit mapKit = MapKitFactory.getInstance();
+            userLocationLayer = mapKit.createUserLocationLayer(mapview.getMapWindow());
+            userLocationLayer.setVisible(true);
+            userLocationLayer.setHeadingEnabled(true);
+
+            userLocationLayer.setObjectListener(this);
+        }
+
     }
     @Override
     protected void onStop() {
@@ -68,14 +94,20 @@ public class MainActivity extends AppCompatActivity implements UserLocationObjec
         latitude = Double.parseDouble(latitudeEdit.getText().toString());
         EditText longitudeEdit = findViewById(R.id.editTextNumberDecimal2);
         longitude = Double.parseDouble(longitudeEdit.getText().toString());
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+        Mark();
 
+    }
+
+    private void Mark() {
         mapview.getMap().move(new CameraPosition(new Point(latitude, longitude), 14, 0, 0));
         Point point = new Point(latitude, longitude);
         // Чтобы очистить все прошлые метки, кроме метки местоположения телефона
         // mapview.getMap().getMapObjects().clear();
         mapview.getMap().getMapObjects().addPlacemark(point, ImageProvider.fromResource(this, R.drawable.mapmarker));
-
-
     }
 
     @Override
