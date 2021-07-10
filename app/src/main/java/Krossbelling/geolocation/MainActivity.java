@@ -1,23 +1,18 @@
 package Krossbelling.geolocation;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PointF;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.yandex.mapkit.MapKit;
@@ -35,10 +30,10 @@ import com.yandex.mapkit.user_location.UserLocationView;
 import com.yandex.runtime.image.ImageProvider;
 
 
+public class MainActivity extends Activity implements UserLocationObjectListener  {
 
-public class MainActivity extends AppCompatActivity implements UserLocationObjectListener  {
-
-    private MapView mapview;
+    private final String mapkitKey = "75db84e4-3f8a-471d-8542-95162df4a7d6";
+    private MapView mapView;
     private UserLocationLayer userLocationLayer;
 
     double latitude;
@@ -47,11 +42,14 @@ public class MainActivity extends AppCompatActivity implements UserLocationObjec
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        MapKitFactory.setApiKey("75db84e4-3f8a-471d-8542-95162df4a7d6");
+        super.onCreate(savedInstanceState);
+
+        MapKitFactory.setApiKey(mapkitKey);
+
         MapKitFactory.initialize(this);
         setContentView(R.layout.activity_main);
-        super.onCreate(savedInstanceState);
-        mapview = findViewById(R.id.mapview);
+        mapView = (MapView)findViewById(R.id.mapview);
+
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
@@ -62,59 +60,77 @@ public class MainActivity extends AppCompatActivity implements UserLocationObjec
         }
         else {
 
-            mapview.getMap().setRotateGesturesEnabled(false);
-            mapview.getMap().move(new CameraPosition(new Point(0, 0), 14, 0, 0));
+            mapView.getMap().setRotateGesturesEnabled(false);
+            mapView.getMap().move(new CameraPosition(new Point(0, 0), 14, 0, 0));
+
 
             MapKit mapKit = MapKitFactory.getInstance();
-            userLocationLayer = mapKit.createUserLocationLayer(mapview.getMapWindow());
+            userLocationLayer = mapKit.createUserLocationLayer(mapView.getMapWindow());
             userLocationLayer.setVisible(true);
             userLocationLayer.setHeadingEnabled(true);
 
             userLocationLayer.setObjectListener(this);
+
+
         }
+
 
     }
     @Override
     protected void onStop() {
-        super.onStop();
+        mapView.onStop();
         MapKitFactory.getInstance().onStop();
-        mapview.onStop();
+        super.onStop();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         MapKitFactory.getInstance().onStart();
-        mapview.onStart();
+        mapView.onStart();
 
     }
     public void onClick(View view) {
 
         EditText latitudeEdit = findViewById(R.id.editTextNumberDecimal);
-        latitude = Double.parseDouble(latitudeEdit.getText().toString());
         EditText longitudeEdit = findViewById(R.id.editTextNumberDecimal2);
-        longitude = Double.parseDouble(longitudeEdit.getText().toString());
-        if (view != null) {
-            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        if(latitudeEdit.getText().length() != 0 && longitudeEdit.getText().length() != 0){
+            latitude = Double.parseDouble(latitudeEdit.getText().toString());
+            longitude = Double.parseDouble(longitudeEdit.getText().toString());
+
+            if(latitude<=90 && longitude<=180 && latitude>=-90 && longitude>=-180) {
+                Mark();
+            }
+            else{
+                Toast.makeText(this, "Максимальная долгота: 180°, Максимальная широта: 90°.", Toast.LENGTH_LONG).show();
+            }
         }
-        Mark();
+        else{
+            Toast.makeText(this, "Введите широту и долготу.", Toast.LENGTH_LONG).show();
+        }
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+
+        }
+
+
 
     }
 
     private void Mark() {
-        mapview.getMap().move(new CameraPosition(new Point(latitude, longitude), 14, 0, 0));
+        mapView.getMap().move(new CameraPosition(new Point(latitude, longitude), 14, 0, 0));
         Point point = new Point(latitude, longitude);
         // Чтобы очистить все прошлые метки, кроме метки местоположения телефона
         // mapview.getMap().getMapObjects().clear();
-        mapview.getMap().getMapObjects().addPlacemark(point, ImageProvider.fromResource(this, R.drawable.mapmarker));
+        mapView.getMap().getMapObjects().addPlacemark(point, ImageProvider.fromResource(this, R.drawable.mapmarker));
     }
 
     @Override
     public void onObjectAdded(UserLocationView userLocationView) {
         userLocationLayer.setAnchor(
-                new PointF((float)(mapview.getWidth() * 0.5), (float)(mapview.getHeight() * 0.5)),
-                new PointF((float)(mapview.getWidth() * 0.5), (float)(mapview.getHeight() * 0.83)));
+                new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.5)),
+                new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.83)));
 
 
 
@@ -134,12 +150,14 @@ public class MainActivity extends AppCompatActivity implements UserLocationObjec
     }
 
     @Override
-    public void onObjectRemoved(UserLocationView userLocationView) {
+    public void onObjectRemoved(@NonNull UserLocationView userLocationView) {
 
     }
 
     @Override
-    public void onObjectUpdated(UserLocationView userLocationView, ObjectEvent objectEvent) {
+    public void onObjectUpdated(@NonNull UserLocationView userLocationView, @NonNull ObjectEvent objectEvent) {
 
     }
+
+
 }

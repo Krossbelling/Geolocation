@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Geolocation</string>
+    <string name="Показать">Показать</string>
+    <string name="Долгота">Долгота</string>
+    <string name="Широта">Широта</string>
+    <string name="Number">Number</string>
 </resources>
