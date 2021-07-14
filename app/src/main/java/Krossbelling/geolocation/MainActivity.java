@@ -3,13 +3,17 @@ package Krossbelling.geolocation;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -29,25 +33,40 @@ import com.yandex.mapkit.user_location.UserLocationObjectListener;
 import com.yandex.mapkit.user_location.UserLocationView;
 import com.yandex.runtime.image.ImageProvider;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-public class MainActivity extends Activity implements UserLocationObjectListener  {
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+
+public class MainActivity extends Activity implements UserLocationObjectListener {
 
     private final String mapkitKey = "75db84e4-3f8a-471d-8542-95162df4a7d6";
     private MapView mapView;
     private UserLocationLayer userLocationLayer;
-
     double latitude;
     double longitude;
+    double[] latitudeArray;
+    double[] longitudeArray;
+    static final private int CHOOSE_THIEF = 0;
+
+    String urlString ="x";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-
         MapKitFactory.setApiKey(mapkitKey);
-
         MapKitFactory.initialize(this);
         setContentView(R.layout.activity_main);
+
         mapView = (MapView)findViewById(R.id.mapview);
 
 
@@ -59,28 +78,100 @@ public class MainActivity extends Activity implements UserLocationObjectListener
                     100);
         }
         else {
-
             mapView.getMap().setRotateGesturesEnabled(false);
             mapView.getMap().move(new CameraPosition(new Point(0, 0), 14, 0, 0));
-
-
             MapKit mapKit = MapKitFactory.getInstance();
             userLocationLayer = mapKit.createUserLocationLayer(mapView.getMapWindow());
             userLocationLayer.setVisible(true);
             userLocationLayer.setHeadingEnabled(true);
-
             userLocationLayer.setObjectListener(this);
 
-
+            new fetchData().start();
         }
-
-
     }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        switch (id) {
+            case R.id.action_settings:
+                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivityForResult(intent,CHOOSE_THIEF);
+            case R.id.action_about_app:
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == CHOOSE_THIEF){
+            if(resultCode == RESULT_OK){
+                urlString = data.getStringExtra(SettingsActivity.THIEF);
+                new fetchData().start();
+            }
+            else {
+                urlString ="";
+            }
+        }
+    }
+
+    class  fetchData extends  Thread{
+
+        String data = "";
+
+        @Override
+        public void run() {
+            try {
+
+                // URL url = new URL("https://api.npoint.io/8b4e757fc55c1c0fb110");
+                URL url = new URL(urlString);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                InputStream inputStream = connection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                String line;
+                while ((line = bufferedReader.readLine())!=null){
+                    data = data + line;
+                }
+
+                if (!data.isEmpty()){
+                    JSONObject jsonObject = new JSONObject(data);
+                    JSONArray mark = jsonObject.getJSONArray("Mark");
+                    latitudeArray = new double[mark.length()];
+                    longitudeArray =new double[mark.length()];
+                    for (int i = 0; i<mark.length();i++){
+                        JSONObject ids = mark.getJSONObject(i);
+                        String latitudeStr = ids.getString("latitude");
+                        latitudeArray[i] = Double.parseDouble(latitudeStr);
+                        String longitudeStr = ids.getString("longitude");
+                        longitudeArray[i] = Double.parseDouble(longitudeStr);
+                    }
+                }
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     @Override
     protected void onStop() {
-        mapView.onStop();
-        MapKitFactory.getInstance().onStop();
         super.onStop();
+        MapKitFactory.getInstance().onStop();
+        mapView.onStop();
     }
 
     @Override
@@ -88,10 +179,9 @@ public class MainActivity extends Activity implements UserLocationObjectListener
         super.onStart();
         MapKitFactory.getInstance().onStart();
         mapView.onStart();
-
     }
-    public void onClick(View view) {
 
+    public void onClick(View view) {
         EditText latitudeEdit = findViewById(R.id.editTextNumberDecimal);
         EditText longitudeEdit = findViewById(R.id.editTextNumberDecimal2);
         if(latitudeEdit.getText().length() != 0 && longitudeEdit.getText().length() != 0){
@@ -100,6 +190,7 @@ public class MainActivity extends Activity implements UserLocationObjectListener
 
             if(latitude<=90 && longitude<=180 && latitude>=-90 && longitude>=-180) {
                 Mark();
+
             }
             else{
                 Toast.makeText(this, "Максимальная долгота: 180°, Максимальная широта: 90°.", Toast.LENGTH_LONG).show();
@@ -111,23 +202,27 @@ public class MainActivity extends Activity implements UserLocationObjectListener
         if (view != null) {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-
         }
 
+    }
 
-
+    private void Mark(double latitude, double longitude) {
+        Point point = new Point(latitude, longitude);
+        // Чтобы очистить все прошлые метки, кроме метки местоположения телефона
+        // mapView.getMap().getMapObjects().clear();
+        mapView.getMap().getMapObjects().addPlacemark(point, ImageProvider.fromResource(this, R.drawable.mapmarker));
     }
 
     private void Mark() {
         mapView.getMap().move(new CameraPosition(new Point(latitude, longitude), 14, 0, 0));
         Point point = new Point(latitude, longitude);
         // Чтобы очистить все прошлые метки, кроме метки местоположения телефона
-        // mapview.getMap().getMapObjects().clear();
+        // mapView.getMap().getMapObjects().clear();
         mapView.getMap().getMapObjects().addPlacemark(point, ImageProvider.fromResource(this, R.drawable.mapmarker));
     }
 
     @Override
-    public void onObjectAdded(UserLocationView userLocationView) {
+    public void onObjectAdded(@NonNull UserLocationView userLocationView) {
         userLocationLayer.setAnchor(
                 new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.5)),
                 new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.83)));
@@ -144,8 +239,7 @@ public class MainActivity extends Activity implements UserLocationObjectListener
                         .setScale(0.5f)
         );
 
-
-        userLocationView.getAccuracyCircle().setFillColor(Color.BLUE & 0x99ffffff);
+         userLocationView.getAccuracyCircle().setFillColor(Color.BLUE & 0x99ffffff);
 
     }
 
@@ -156,6 +250,14 @@ public class MainActivity extends Activity implements UserLocationObjectListener
 
     @Override
     public void onObjectUpdated(@NonNull UserLocationView userLocationView, @NonNull ObjectEvent objectEvent) {
+        try {
+            for(int i = 0; i< latitudeArray.length; i++){
+                Mark(latitudeArray[i], longitudeArray[i]);
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 

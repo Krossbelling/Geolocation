@@ -4,4 +4,9 @@
     <string name="Долгота">Долгота</string>
     <string name="Широта">Широта</string>
     <string name="Number">Number</string>
+    <string name="action_settings">Настройки</string>
+    <string name="about_applications">О приложении</string>
+    <string name="add">Добавить</string>
+    <string name="add_url">Введите url:</string>
+
 </resources>
