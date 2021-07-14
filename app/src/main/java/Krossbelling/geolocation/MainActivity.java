@@ -132,30 +132,35 @@ public class MainActivity extends Activity implements UserLocationObjectListener
         @Override
         public void run() {
             try {
+                if(urlString != "x"){
+                    // URL url = new URL("https://api.npoint.io/8b4e757fc55c1c0fb110");
+                    URL url = new URL(urlString);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    InputStream inputStream = connection.getInputStream();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                    String line;
+                    while ((line = bufferedReader.readLine())!=null){
+                        data = data + line;
+                    }
 
-                // URL url = new URL("https://api.npoint.io/8b4e757fc55c1c0fb110");
-                URL url = new URL(urlString);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                InputStream inputStream = connection.getInputStream();
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-                while ((line = bufferedReader.readLine())!=null){
-                    data = data + line;
-                }
+                    if (!data.isEmpty()){
+                        JSONObject jsonObject = new JSONObject(data);
+                        JSONArray mark = jsonObject.getJSONArray("Mark");
+                        latitudeArray = new double[mark.length()];
+                        longitudeArray =new double[mark.length()];
+                        for (int i = 0; i<mark.length();i++){
+                            JSONObject ids = mark.getJSONObject(i);
+                            String latitudeStr = ids.getString("latitude");
+                            latitudeArray[i] = Double.parseDouble(latitudeStr);
+                            String longitudeStr = ids.getString("longitude");
+                            longitudeArray[i] = Double.parseDouble(longitudeStr);
 
-                if (!data.isEmpty()){
-                    JSONObject jsonObject = new JSONObject(data);
-                    JSONArray mark = jsonObject.getJSONArray("Mark");
-                    latitudeArray = new double[mark.length()];
-                    longitudeArray =new double[mark.length()];
-                    for (int i = 0; i<mark.length();i++){
-                        JSONObject ids = mark.getJSONObject(i);
-                        String latitudeStr = ids.getString("latitude");
-                        latitudeArray[i] = Double.parseDouble(latitudeStr);
-                        String longitudeStr = ids.getString("longitude");
-                        longitudeArray[i] = Double.parseDouble(longitudeStr);
+                        }
+
                     }
                 }
+
+
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();
