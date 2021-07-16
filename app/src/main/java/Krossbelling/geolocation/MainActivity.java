@@ -57,7 +57,9 @@ public class MainActivity extends Activity implements UserLocationObjectListener
     double[] longitudeArray;
     static final private int CHOOSE_THIEF = 0;
 
-    String urlString ="x";
+    static boolean firstStart = true;
+
+    String urlString = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,10 +68,7 @@ public class MainActivity extends Activity implements UserLocationObjectListener
         MapKitFactory.setApiKey(mapkitKey);
         MapKitFactory.initialize(this);
         setContentView(R.layout.activity_main);
-
         mapView = (MapView)findViewById(R.id.mapview);
-
-
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
@@ -83,25 +82,25 @@ public class MainActivity extends Activity implements UserLocationObjectListener
             MapKit mapKit = MapKitFactory.getInstance();
             userLocationLayer = mapKit.createUserLocationLayer(mapView.getMapWindow());
             userLocationLayer.setVisible(true);
-            userLocationLayer.setHeadingEnabled(true);
+            userLocationLayer.setHeadingEnabled(false);
             userLocationLayer.setObjectListener(this);
+
 
             new fetchData().start();
         }
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id) {
             case R.id.action_settings:
+                userLocationLayer.resetAnchor();
                 Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
                 startActivityForResult(intent,CHOOSE_THIEF);
             case R.id.action_about_app:
@@ -110,7 +109,6 @@ public class MainActivity extends Activity implements UserLocationObjectListener
                 return super.onOptionsItemSelected(item);
         }
     }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -132,7 +130,7 @@ public class MainActivity extends Activity implements UserLocationObjectListener
         @Override
         public void run() {
             try {
-                if(urlString != "x"){
+                if(urlString != null){
                     // URL url = new URL("https://api.npoint.io/8b4e757fc55c1c0fb110");
                     URL url = new URL(urlString);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -147,8 +145,8 @@ public class MainActivity extends Activity implements UserLocationObjectListener
                         JSONObject jsonObject = new JSONObject(data);
                         JSONArray mark = jsonObject.getJSONArray("Mark");
                         latitudeArray = new double[mark.length()];
-                        longitudeArray =new double[mark.length()];
-                        for (int i = 0; i<mark.length();i++){
+                        longitudeArray = new double[mark.length()];
+                        for (int i = 0; i < mark.length(); i++){
                             JSONObject ids = mark.getJSONObject(i);
                             String latitudeStr = ids.getString("latitude");
                             latitudeArray[i] = Double.parseDouble(latitudeStr);
@@ -156,12 +154,8 @@ public class MainActivity extends Activity implements UserLocationObjectListener
                             longitudeArray[i] = Double.parseDouble(longitudeStr);
 
                         }
-
                     }
                 }
-
-
-
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -212,28 +206,28 @@ public class MainActivity extends Activity implements UserLocationObjectListener
     }
 
     private void Mark(double latitude, double longitude) {
+        userLocationLayer.resetAnchor();
         Point point = new Point(latitude, longitude);
-        // Чтобы очистить все прошлые метки, кроме метки местоположения телефона
-        // mapView.getMap().getMapObjects().clear();
         mapView.getMap().getMapObjects().addPlacemark(point, ImageProvider.fromResource(this, R.drawable.mapmarker));
+
     }
 
     private void Mark() {
+        userLocationLayer.resetAnchor();
         mapView.getMap().move(new CameraPosition(new Point(latitude, longitude), 14, 0, 0));
         Point point = new Point(latitude, longitude);
-        // Чтобы очистить все прошлые метки, кроме метки местоположения телефона
-        // mapView.getMap().getMapObjects().clear();
         mapView.getMap().getMapObjects().addPlacemark(point, ImageProvider.fromResource(this, R.drawable.mapmarker));
     }
 
     @Override
     public void onObjectAdded(@NonNull UserLocationView userLocationView) {
-        userLocationLayer.setAnchor(
-                new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.5)),
-                new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.83)));
+        if(firstStart){
+            userLocationLayer.setAnchor(
+                    new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.5)),
+                    new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.83)));
+            firstStart = false;
 
-
-
+        }
         CompositeIcon pinIcon = userLocationView.getPin().useCompositeIcon();
         pinIcon.setIcon(
                 "pin",
@@ -243,8 +237,7 @@ public class MainActivity extends Activity implements UserLocationObjectListener
                         .setZIndex(1f)
                         .setScale(0.5f)
         );
-
-         userLocationView.getAccuracyCircle().setFillColor(Color.BLUE & 0x99ffffff);
+        userLocationView.getAccuracyCircle().setFillColor(Color.BLUE & 0x99ffffff);
 
     }
 
